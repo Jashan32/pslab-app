@@ -1446,6 +1446,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get estimated => 'Estimated';
 
   @override
+  String get distance => 'Distance';
+
+  @override
+  String get distanceUnitLabel => 'mm';
+
+  @override
   String get legacyFirmwareAlertTitle => 'Legacy Firmware Detected';
 
   @override

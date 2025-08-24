@@ -2790,6 +2790,18 @@ abstract class AppLocalizations {
   /// **'Estimated'**
   String get estimated;
 
+  /// No description provided for @distance.
+  ///
+  /// In en, this message translates to:
+  /// **'Distance'**
+  String get distance;
+
+  /// No description provided for @distanceUnitLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'mm'**
+  String get distanceUnitLabel;
+
   /// No description provided for @legacyFirmwareAlertTitle.
   ///
   /// In en, this message translates to:
