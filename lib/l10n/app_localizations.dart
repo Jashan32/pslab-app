@@ -643,20 +643,26 @@ abstract class AppLocalizations {
   /// No description provided for @step1ConnectMicroUsb.
   ///
   /// In en, this message translates to:
-  /// **'1. Connect a micro USB(Mini B) to PSLab'**
+  /// **'1. Connect a USB cable to PSLab.'**
   String get step1ConnectMicroUsb;
 
   /// No description provided for @step2ConnectOtg.
   ///
   /// In en, this message translates to:
-  /// **'2. Connect the other end of the micro USB cable to a OTG'**
+  /// **'2. Connect the other end of the USB cable to an OTG.'**
   String get step2ConnectOtg;
 
   /// No description provided for @step3ConnectPhone.
   ///
   /// In en, this message translates to:
-  /// **'3. Connect the OTG to the phone'**
+  /// **'3. Connect the OTG to the phone.'**
   String get step3ConnectPhone;
+
+  /// No description provided for @step4ConnectWireless.
+  ///
+  /// In en, this message translates to:
+  /// **'4. PSLab can also be connected wirelessly (Bluetooth or Wi-Fi) if the option is present.'**
+  String get step4ConnectWireless;
 
   /// No description provided for @bluetoothWifiConnection.
   ///
