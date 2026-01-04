@@ -259,22 +259,22 @@ class _PowerSourceScreenState extends State<PowerSourceScreen> {
                           ),
                           const SizedBox(height: 8),
                           TextField(
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             controller: TextEditingController(
-                              text:
-                                  '${provider.voltagePV1.toStringAsFixed(2)} V',
+                              text: provider.voltagePV1.toStringAsFixed(2),
                             ),
                             style: TextStyle(
                               fontSize: 18,
                             ),
                             textAlign: TextAlign.center,
                             onSubmitted: (value) async {
-                              String powerValue =
-                                  value.replaceAll("V", "").trim();
                               double parsedValue =
-                                  double.tryParse(powerValue) ?? 0.0;
+                                  double.tryParse(value) ?? 0.0;
                               await provider.setPV1(parsedValue);
                             },
                             decoration: InputDecoration(
+                              suffixText: ' V',
                               enabledBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
                                   color: powerSourceBorderLightRed,
@@ -369,22 +369,22 @@ class _PowerSourceScreenState extends State<PowerSourceScreen> {
                           ),
                           const SizedBox(height: 8),
                           TextField(
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             controller: TextEditingController(
-                              text:
-                                  '${provider.voltagePV2.toStringAsFixed(2)} V',
+                              text: provider.voltagePV2.toStringAsFixed(2),
                             ),
                             textAlign: TextAlign.center,
                             onSubmitted: (value) async {
-                              String powerValue =
-                                  value.replaceAll("V", "").trim();
                               double parsedValue =
-                                  double.tryParse(powerValue) ?? 0.0;
+                                  double.tryParse(value) ?? 0.0;
                               await provider.setPV2(parsedValue);
                             },
                             style: TextStyle(
                               fontSize: 18,
                             ),
                             decoration: InputDecoration(
+                              suffixText: ' V',
                               enabledBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
                                   color: powerSourceBorderLightRed,
@@ -479,22 +479,22 @@ class _PowerSourceScreenState extends State<PowerSourceScreen> {
                           ),
                           const SizedBox(height: 8),
                           TextField(
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             controller: TextEditingController(
-                              text:
-                                  '${provider.voltagePV3.toStringAsFixed(2)} V',
+                              text: provider.voltagePV3.toStringAsFixed(2),
                             ),
                             textAlign: TextAlign.center,
                             onSubmitted: (value) async {
-                              String powerValue =
-                                  value.replaceAll("V", "").trim();
                               double parsedValue =
-                                  double.tryParse(powerValue) ?? 0.0;
+                                  double.tryParse(value) ?? 0.0;
                               await provider.setPV3(parsedValue);
                             },
                             style: TextStyle(
                               fontSize: 18,
                             ),
                             decoration: InputDecoration(
+                              suffixText: ' V',
                               enabledBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
                                   color: powerSourceBorderLightRed,
@@ -589,22 +589,22 @@ class _PowerSourceScreenState extends State<PowerSourceScreen> {
                           ),
                           const SizedBox(height: 8),
                           TextField(
+                            keyboardType: const TextInputType.numberWithOptions(
+                                decimal: true),
                             controller: TextEditingController(
-                              text:
-                                  '${provider.currentPCS.toStringAsFixed(2)} mA',
+                              text: provider.currentPCS.toStringAsFixed(2),
                             ),
                             style: TextStyle(
                               fontSize: 18,
                             ),
                             textAlign: TextAlign.center,
                             onSubmitted: (value) async {
-                              String powerValue =
-                                  value.replaceAll("V", "").trim();
                               double parsedValue =
-                                  double.tryParse(powerValue) ?? 0.0;
+                                  double.tryParse(value) ?? 0.0;
                               await provider.setPCS(parsedValue);
                             },
                             decoration: InputDecoration(
+                              suffixText: ' mA',
                               enabledBorder: OutlineInputBorder(
                                 borderSide: BorderSide(
                                   color: powerSourceBorderLightRed,
