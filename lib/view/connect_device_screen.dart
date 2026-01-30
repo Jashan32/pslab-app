@@ -21,6 +21,60 @@ class ConnectDeviceScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<ConnectDeviceScreen> {
   AppLocalizations appLocalizations = getIt.get<AppLocalizations>();
+  bool _isConnectingWifi = false;
+
+  void _showSnackBar(String message, {Color? backgroundColor}) {
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: backgroundColor,
+      ),
+    );
+  }
+
+  Future<void> _connectWifi(BoardStateProvider provider) async {
+    setState(() {
+      _isConnectingWifi = true;
+    });
+
+    _showSnackBar(appLocalizations.connectingToWifi);
+
+    try {
+      await provider.initializeWiFi();
+
+      if (!mounted) return;
+
+      if (provider.pslabIsConnected) {
+        _showSnackBar(
+          appLocalizations.wifiConnectionSuccess,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+        );
+      } else {
+        _showSnackBar(
+          appLocalizations.wifiConnectionFailed,
+          backgroundColor: Theme.of(context).colorScheme.error,
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      _showSnackBar(
+        appLocalizations.wifiConnectionFailed,
+        backgroundColor: Theme.of(context).colorScheme.error,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isConnectingWifi = false;
+        });
+      }
+    }
+  }
+
+  void _showBluetoothComingSoon() {
+    _showSnackBar(appLocalizations.bluetoothComingSoon);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MainScaffold(
@@ -144,7 +198,7 @@ class _HomeScreenState extends State<ConnectDeviceScreen> {
                                 backgroundColor: primaryRed,
                                 foregroundColor: buttonForegroundColor,
                               ),
-                              onPressed: () {},
+                              onPressed: _showBluetoothComingSoon,
                               child: Padding(
                                 padding: const EdgeInsets.all(10),
                                 child: Text(
@@ -162,15 +216,25 @@ class _HomeScreenState extends State<ConnectDeviceScreen> {
                                 backgroundColor: primaryRed,
                                 foregroundColor: buttonForegroundColor,
                               ),
-                              onPressed: () async {
-                                await provider.initializeWiFi();
-                              },
+                              onPressed: _isConnectingWifi
+                                  ? null
+                                  : () => _connectWifi(provider),
                               child: Padding(
                                 padding: const EdgeInsets.all(10),
-                                child: Text(
-                                  appLocalizations.wifi.toUpperCase(),
-                                  style: TextStyle(color: buttonTextColor),
-                                ),
+                                child: _isConnectingWifi
+                                    ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Text(
+                                        appLocalizations.wifi.toUpperCase(),
+                                        style:
+                                            TextStyle(color: buttonTextColor),
+                                      ),
                               ),
                             ),
                           ],
