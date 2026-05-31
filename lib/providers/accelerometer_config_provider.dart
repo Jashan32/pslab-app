@@ -46,6 +46,12 @@ class AccelerometerConfigProvider extends ChangeNotifier {
     _saveConfigToPrefs();
   }
 
+  void updateDepthLimit(int depthLimit) {
+    _config = _config.copyWith(depthLimit: depthLimit);
+    notifyListeners();
+    _saveConfigToPrefs();
+  }
+
   void updateActiveSensor(String activeSensor) {
     _config = _config.copyWith(activeSensor: activeSensor);
     notifyListeners();

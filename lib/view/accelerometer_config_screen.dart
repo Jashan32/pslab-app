@@ -19,6 +19,7 @@ class AccelerometerConfigScreen extends StatefulWidget {
 class _AccelerometerConfigScreenState extends State<AccelerometerConfigScreen> {
   final TextEditingController _updatePeriodController = TextEditingController();
   final TextEditingController _highLimitController = TextEditingController();
+  final TextEditingController _depthLimitController = TextEditingController();
   final TextEditingController _sensorGainController = TextEditingController();
   AppLocalizations get appLocalizations => getIt.get<AppLocalizations>();
 
@@ -30,6 +31,7 @@ class _AccelerometerConfigScreenState extends State<AccelerometerConfigScreen> {
           Provider.of<AccelerometerConfigProvider>(context, listen: false);
       _updatePeriodController.text = provider.config.updatePeriod.toString();
       _highLimitController.text = provider.config.highLimit.toString();
+      _depthLimitController.text = provider.config.depthLimit.toString();
       _sensorGainController.text = provider.config.sensorGain.toString();
     });
   }
@@ -38,6 +40,7 @@ class _AccelerometerConfigScreenState extends State<AccelerometerConfigScreen> {
   void dispose() {
     _updatePeriodController.dispose();
     _highLimitController.dispose();
+    _depthLimitController.dispose();
     _sensorGainController.dispose();
     super.dispose();
   }
@@ -139,6 +142,30 @@ class _AccelerometerConfigScreenState extends State<AccelerometerConfigScreen> {
                         }
                       },
                       hint: appLocalizations.accelerometerHighLimitHint,
+                    ),
+                    ConfigInputItem(
+                      title: appLocalizations.depthLimit,
+                      value:
+                          '${provider.config.depthLimit} ${appLocalizations.meterPerSecondSquared}',
+                      controller: _depthLimitController,
+                      onChanged: (value) {
+                        final intValue = int.tryParse(value);
+                        if (intValue != null &&
+                            intValue >= 10 &&
+                            intValue <= 200) {
+                          provider.updateDepthLimit(intValue);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                  appLocalizations.depthLimitErrorMessage,
+                                  style: TextStyle(color: snackBarContentColor),
+                                ),
+                                backgroundColor: snackBarBackgroundColor),
+                          );
+                        }
+                      },
+                      hint: appLocalizations.accelerometerDepthLimitHint,
                     ),
                     ConfigDropdownItem(
                       title: appLocalizations.activeSensor,

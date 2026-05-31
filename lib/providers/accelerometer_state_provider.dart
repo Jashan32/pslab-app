@@ -39,7 +39,9 @@ class AccelerometerStateProvider extends ChangeNotifier {
   StreamSubscription? _locationStream;
   Position? currentPosition;
   Function? onPlaybackEnd;
-  double? get _currentLimit => _configProvider?.config.highLimit.toDouble();
+  double? get _currentHighLimit => _configProvider?.config.highLimit.toDouble();
+  double? get _currentDepthLimit =>
+      _configProvider?.config.depthLimit.toDouble();
   void setConfigProvider(AccelerometerConfigProvider configProvider) {
     _configProvider = configProvider;
   }
@@ -211,20 +213,21 @@ class AccelerometerStateProvider extends ChangeNotifier {
   }
 
   void _updateData() {
-    final limit = _currentLimit;
+    final highLimit = _currentHighLimit;
+    final depthLimit = _currentDepthLimit;
 
-    final bool shouldClip = limit != null && !_isPlayingBack;
+    final bool shouldClip = !_isPlayingBack;
 
-    final x = (shouldClip && _accelerometerEvent.x > limit)
-        ? limit
+    final double x = (shouldClip && highLimit != null)
+        ? _accelerometerEvent.x.clamp(-highLimit, highLimit)
         : _accelerometerEvent.x;
 
-    final y = (shouldClip && _accelerometerEvent.y > limit)
-        ? limit
+    final double y = (shouldClip && highLimit != null)
+        ? _accelerometerEvent.y.clamp(-highLimit, highLimit)
         : _accelerometerEvent.y;
 
-    final z = (shouldClip && _accelerometerEvent.z > limit)
-        ? limit
+    final double z = (shouldClip && depthLimit != null)
+        ? _accelerometerEvent.z.clamp(-depthLimit, depthLimit)
         : _accelerometerEvent.z;
 
     _accelerometerEvent = AccelerometerEvent(x, y, z, DateTime.now());
