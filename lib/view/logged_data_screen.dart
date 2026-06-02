@@ -70,8 +70,8 @@ class _LoggedDataScreenState extends State<LoggedDataScreen> {
     if (mounted) {
       setState(() {
         _isLoading = false;
-        _filteredFiles = List.from(_allFiles);
       });
+      _filterLogs(_searchController.text);
     }
   }
 
