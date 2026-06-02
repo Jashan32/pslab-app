@@ -398,6 +398,7 @@ class _LoggedDataScreenState extends State<LoggedDataScreen> {
                   ),
                   border: InputBorder.none,
                 ),
+                cursorColor: appBarContentColor,
               )
             : Text(
                 widget.appBarName,
