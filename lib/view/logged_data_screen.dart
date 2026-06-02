@@ -364,7 +364,7 @@ class _LoggedDataScreenState extends State<LoggedDataScreen> {
 
   void _filterLogs(String query) {
     setState(() {
-      if (query.isEmpty) {
+      if (query.trim().isEmpty) {
         _filteredFiles = List.from(_allFiles);
       } else {
         final search = query.trim().toLowerCase();
