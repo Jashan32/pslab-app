@@ -20,6 +20,7 @@ import '../l10n/app_localizations.dart';
 import '../providers/locator.dart';
 import 'accelerometer_screen.dart';
 import 'compass_screen.dart';
+import 'package:pslab/view/thermometer_screen.dart';
 
 class LoggedDataScreen extends StatefulWidget {
   final List<String> instrumentNames;
@@ -237,6 +238,14 @@ class _LoggedDataScreenState extends State<LoggedDataScreen> {
             context,
             MaterialPageRoute(
               builder: (context) => SoundMeterScreen(playbackData: data),
+            ),
+          );
+          break;
+        case 'thermometer':
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ThermometerScreen(playbackData: data),
             ),
           );
           break;
@@ -582,6 +591,9 @@ class _LoggedDataScreenState extends State<LoggedDataScreen> {
                                           .toLowerCase() ||
                                   instrumentName ==
                                       appLocalizations.compassTitle
+                                          .toLowerCase() ||
+                                  instrumentName ==
+                                      appLocalizations.thermometerTitle
                                           .toLowerCase())
                                 PopupMenuItem<String>(
                                   value: appLocalizations.play,
