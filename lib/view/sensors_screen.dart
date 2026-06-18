@@ -11,6 +11,8 @@ import 'package:pslab/view/apds9960_screen.dart';
 import 'package:pslab/view/tsl2561_screen.dart';
 import 'package:pslab/view/mpu6050_screen.dart';
 
+import 'package:pslab/view/max30102_screen.dart';
+
 import 'package:pslab/view/widgets/common_scaffold_widget.dart';
 import '../../providers/board_state_provider.dart';
 import '../l10n/app_localizations.dart';
@@ -49,6 +51,7 @@ class _SensorsScreenState extends State<SensorsScreen> {
         41: ['VL53L0X'],
         64: ['SHT21'],
         72: ['ADS1115'],
+        87: ['MAX30102'],
         105: ['MPU925X'],
         119: ['BMP180'],
       };
@@ -124,6 +127,9 @@ class _SensorsScreenState extends State<SensorsScreen> {
             actualSensorAddresses[sensorName] =
                 '0x${address.toRadixString(16).toUpperCase()}';
           }
+        } else {
+          logger.i(
+              "Detected unknown sensor with address 0x${address.toRadixString(16).toUpperCase()} ($address)");
         }
       }
 
@@ -164,6 +170,8 @@ class _SensorsScreenState extends State<SensorsScreen> {
         return appLocalizations.sensorDescCCS811;
       case 'HMC5883L':
         return appLocalizations.sensorDescHMC5883L;
+      case 'MAX30102':
+        return appLocalizations.sensorDescMAX30102;
       case 'MLX90614':
         return appLocalizations.sensorDescMLX90614;
       case 'MPU6050':
@@ -305,6 +313,7 @@ class _SensorsScreenState extends State<SensorsScreen> {
       'BMP180',
       'CCS811',
       'HMC5883L',
+      'MAX30102',
       'MLX90614',
       'MPU6050',
       'MPU925X',
@@ -440,6 +449,10 @@ class _SensorsScreenState extends State<SensorsScreen> {
       case 'MPU6050':
         targetScreen = const MPU6050Screen();
         break;
+      case 'MAX30102':
+        targetScreen = const MAX30102Screen();
+        break;
+
       default:
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
