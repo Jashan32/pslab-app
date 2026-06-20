@@ -15,6 +15,23 @@ class CompassConfigScreen extends StatefulWidget {
 
 class _CompassConfigScreenState extends State<CompassConfigScreen> {
   AppLocalizations get appLocalizations => getIt.get<AppLocalizations>();
+  final TextEditingController _updatePeriodController = TextEditingController();
+  @override
+  void initState() {
+    super.initState();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final provider =
+          Provider.of<CompassConfigProvider>(context, listen: false);
+      _updatePeriodController.text = provider.config.updatePeriod.toString();
+    });
+  }
+
+  @override
+  void dispose() {
+    _updatePeriodController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,13 +79,41 @@ class _CompassConfigScreenState extends State<CompassConfigScreen> {
           child: Consumer<CompassConfigProvider>(
             builder: (context, provider, child) {
               return SingleChildScrollView(
-                child: ConfigCheckboxItem(
-                  title: appLocalizations.locationData,
-                  subtitle: appLocalizations.locationDataHint,
-                  value: provider.config.includeLocationData,
-                  onChanged: (value) {
-                    provider.updateIncludeLocationData(value);
-                  },
+                child: Column(
+                  children: [
+                    ConfigInputItem(
+                      title: appLocalizations.updatePeriod,
+                      value:
+                          '${provider.config.updatePeriod} ${appLocalizations.ms}',
+                      controller: _updatePeriodController,
+                      onChanged: (value) {
+                        final intValue = int.tryParse(value);
+                        if (intValue != null &&
+                            intValue >= 100 &&
+                            intValue <= 1000) {
+                          provider.updateUpdatePeriod(intValue);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                                content: Text(
+                                  appLocalizations.updatePeriodErrorMessage,
+                                  style: TextStyle(color: snackBarContentColor),
+                                ),
+                                backgroundColor: snackBarBackgroundColor),
+                          );
+                        }
+                      },
+                      hint: appLocalizations.soundMeterUpdatePeriodHint,
+                    ),
+                    ConfigCheckboxItem(
+                      title: appLocalizations.locationData,
+                      subtitle: appLocalizations.locationDataHint,
+                      value: provider.config.includeLocationData,
+                      onChanged: (value) {
+                        provider.updateIncludeLocationData(value);
+                      },
+                    ),
+                  ],
                 ),
               );
             },

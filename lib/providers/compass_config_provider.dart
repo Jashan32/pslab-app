@@ -27,6 +27,12 @@ class CompassConfigProvider extends ChangeNotifier {
     await prefs.setString('compass_config', json.encode(_config.toJson()));
   }
 
+  void updateUpdatePeriod(int updatePeriod) {
+    _config = _config.copyWith(updatePeriod: updatePeriod);
+    notifyListeners();
+    _saveConfigToPrefs();
+  }
+
   void updateConfig(CompassConfig newConfig) {
     _config = newConfig;
     notifyListeners();

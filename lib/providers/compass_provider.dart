@@ -26,6 +26,7 @@ class CompassProvider extends ChangeNotifier {
   bool _isRecording = false;
   List<List<dynamic>> _recordedData = [];
   Timer? _recordTimer;
+  Timer? _updateTimer;
 
   bool _isPlayingBack = false;
   List<List<dynamic>>? _playbackData;
@@ -51,6 +52,7 @@ class CompassProvider extends ChangeNotifier {
 
   void setConfigProvider(CompassConfigProvider configProvider) {
     _configProvider = configProvider;
+    _configProvider?.addListener(_onConfigChanged);
   }
 
   Future<void> _startGeoLocationUpdates() async {
@@ -91,8 +93,6 @@ class CompassProvider extends ChangeNotifier {
     _magnetometerSubscription = magnetometerEventStream().listen(
       (event) {
         _magnetometerEvent = event;
-        _updateCompassDirection();
-        notifyListeners();
       },
       onError: (error) {
         logger.e("${appLocalizations.magnetometerError}: $error");
@@ -103,20 +103,31 @@ class CompassProvider extends ChangeNotifier {
     _accelerometerSubscription = accelerometerEventStream().listen(
       (event) {
         _accelerometerEvent = event;
-        _updateCompassDirection();
-        notifyListeners();
       },
       onError: (error) {
         logger.e("${appLocalizations.accelerometerError}: $error");
       },
       cancelOnError: false,
     );
+
+    _updateTimer = Timer.periodic(
+        Duration(milliseconds: _configProvider?.config.updatePeriod ?? 100),
+        (timer) {
+      _updateCompassDirection();
+      notifyListeners();
+    });
   }
 
   void disposeSensors() {
     _magnetometerSubscription?.cancel();
     _accelerometerSubscription?.cancel();
+    _updateTimer?.cancel();
     _playbackTimer?.cancel();
+  }
+
+  Future<void> _onConfigChanged() async {
+    disposeSensors();
+    initializeSensors();
   }
 
   Future<void> startPlayback(List<List<dynamic>> data) async {
@@ -249,7 +260,9 @@ class CompassProvider extends ChangeNotifier {
       ]
     ];
 
-    _recordTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _recordTimer = Timer.periodic(
+        Duration(milliseconds: _configProvider?.config.updatePeriod ?? 100),
+        (timer) {
       final now = DateTime.now();
       final dateFormat = DateFormat('yyyy-MM-dd HH:mm:ss.SSS');
       _recordedData.add([
