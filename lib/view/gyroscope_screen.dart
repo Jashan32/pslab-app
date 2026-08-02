@@ -99,6 +99,11 @@ class _GyroscopeScreenState extends State<GyroscopeScreen> {
       InstrumentIntroText(
         text: appLocalizations.gyroscopeDesc,
       ),
+      InstrumentCompatibilitySection(
+        phoneSupported: true,
+        pslabOptionalSensor: true,
+        note: appLocalizations.gyroscopeCompatNote,
+      ),
     ];
   }
 
