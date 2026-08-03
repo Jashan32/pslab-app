@@ -41,6 +41,12 @@ class OscilloscopeScreen extends StatefulWidget {
 }
 
 class _OscilloscopeScreenState extends State<OscilloscopeScreen> {
+  /// Approx. content height for the bottom controls (two rows of
+  /// checkbox + dropdown). Same for Channel / Timebase / Data Analysis / XY
+  /// Plot. Not true wrap-content yet: those tabs use Stack + Positioned, so
+  /// they need an explicit height (see fossasia/pslab-app#3461 / #3468).
+  static const double _controlsContentHeight = 120;
+
   late OscilloscopeStateProvider _provider;
   late OscilloscopeConfigProvider? _configProvider;
   AppLocalizations get appLocalizations => getIt.get<AppLocalizations>();
@@ -435,11 +441,6 @@ class _OscilloscopeScreenState extends State<OscilloscopeScreen> {
                                               Column(
                                                 children: [
                                                   Expanded(
-                                                    flex:
-                                                        constraints.maxHeight <
-                                                                600
-                                                            ? 68
-                                                            : 80,
                                                     child: Container(
                                                       padding:
                                                           const EdgeInsets.only(
@@ -449,12 +450,16 @@ class _OscilloscopeScreenState extends State<OscilloscopeScreen> {
                                                           const OscilloscopeGraph(),
                                                     ),
                                                   ),
-                                                  Expanded(
-                                                    flex:
-                                                        constraints.maxHeight <
-                                                                600
-                                                            ? 32
-                                                            : 20,
+                                                  SizedBox(
+                                                    // Cap so phones keep most of
+                                                    // the screen for the graph.
+                                                    height:
+                                                        _controlsContentHeight
+                                                            .clamp(
+                                                      0,
+                                                      constraints.maxHeight *
+                                                          0.35,
+                                                    ),
                                                     child: Selector<
                                                         OscilloscopeStateProvider,
                                                         int>(
