@@ -101,8 +101,8 @@ abstract class RustLibApi extends BaseApi {
 
   void crateApiSimpleSetRts({required bool state});
 
-  void crateApiSimpleWifiConnect(
-      {required String host, required int port, required bool useWebsocket});
+  Future<void> crateApiSimpleWifiConnect(
+      {required String host, required int port});
 
   void crateApiSimpleWifiDisconnect();
 
@@ -358,29 +358,29 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       );
 
   @override
-  void crateApiSimpleWifiConnect(
-      {required String host, required int port, required bool useWebsocket}) {
-    return handler.executeSync(SyncTask(
-      callFfi: () {
+  Future<void> crateApiSimpleWifiConnect(
+      {required String host, required int port}) {
+    return handler.executeNormal(NormalTask(
+      callFfi: (port_) {
         final serializer = SseSerializer(generalizedFrbRustBinding);
         sse_encode_String(host, serializer);
         sse_encode_u_16(port, serializer);
-        sse_encode_bool(useWebsocket, serializer);
-        return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
+        pdeCallFfi(generalizedFrbRustBinding, serializer,
+            funcId: 11, port: port_);
       },
       codec: SseCodec(
         decodeSuccessData: sse_decode_unit,
         decodeErrorData: sse_decode_AnyhowException,
       ),
       constMeta: kCrateApiSimpleWifiConnectConstMeta,
-      argValues: [host, port, useWebsocket],
+      argValues: [host, port],
       apiImpl: this,
     ));
   }
 
   TaskConstMeta get kCrateApiSimpleWifiConnectConstMeta => const TaskConstMeta(
         debugName: "wifi_connect",
-        argNames: ["host", "port", "useWebsocket"],
+        argNames: ["host", "port"],
       );
 
   @override
