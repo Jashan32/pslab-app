@@ -124,10 +124,6 @@ class _WaveGeneratorScreenState extends State<WaveGeneratorScreen> {
       ),
       items: [
         PopupMenuItem(
-          value: 'show_guide',
-          child: Text(appLocalizations.showGuide),
-        ),
-        PopupMenuItem(
           value: 'show_logged_data',
           child: Text(appLocalizations.showLoggedData),
         ),
@@ -202,6 +198,29 @@ class _WaveGeneratorScreenState extends State<WaveGeneratorScreen> {
                 title: appLocalizations.waveGenerator,
                 key: const Key(waveGeneratorScreenTitleKey),
                 onOptionsPressed: _showOptionsMenu,
+                onGuidePressed: _showInstrumentGuide,
+                onSaveDataPressed: () async {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          appLocalizations.saving,
+                          style: TextStyle(color: snackBarContentColor),
+                        ),
+                        backgroundColor: snackBarBackgroundColor,
+                      ),
+                    );
+                  }
+                  await _provider.logData();
+                  if (!context.mounted) return;
+                  final data = _provider.recordedData;
+                  await ExportHelper.handleSaveData(
+                    context: context,
+                    instrumentName:
+                        appLocalizations.waveGenerator.toLowerCase(),
+                    data: data,
+                  );
+                },
                 body: SafeArea(
                   child: Container(
                     margin:
@@ -437,32 +456,6 @@ class _WaveGeneratorScreenState extends State<WaveGeneratorScreen> {
                         ),
                       ),
                     ],
-                  ),
-                  IconButton(
-                    icon: Icon(Icons.save, color: Colors.white),
-                    tooltip: appLocalizations.saveData,
-                    onPressed: () async {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              appLocalizations.saving,
-                              style: TextStyle(color: snackBarContentColor),
-                            ),
-                            backgroundColor: snackBarBackgroundColor,
-                          ),
-                        );
-                      }
-                      await _provider.logData();
-                      if (!context.mounted) return;
-                      final data = _provider.recordedData;
-                      await ExportHelper.handleSaveData(
-                        context: context,
-                        instrumentName:
-                            appLocalizations.waveGenerator.toLowerCase(),
-                        data: data,
-                      );
-                    },
                   ),
                 ],
               ),

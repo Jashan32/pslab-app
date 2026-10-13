@@ -421,6 +421,32 @@ class _LogicAnalyzerScreenState extends State<LogicAnalyzerScreen> {
                 onPlaybackStop: widget.playbackData != null
                     ? () => Navigator.maybePop(context)
                     : null,
+                onSaveDataPressed: () async {
+                  if (widget.playbackData != null) return;
+                  if (!getIt.get<ScienceLab>().isConnected()) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            appLocalizations.notConnected,
+                            style: TextStyle(color: snackBarContentColor),
+                          ),
+                          backgroundColor: snackBarBackgroundColor,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+                  await _provider.logData();
+                  if (!context.mounted) return;
+                  final data = _provider.recordedData;
+                  await ExportHelper.handleSaveData(
+                    context: context,
+                    instrumentName:
+                        appLocalizations.logicAnalyzer.toLowerCase(),
+                    data: data,
+                  );
+                },
                 body: SafeArea(
                   left: false,
                   right: false,
@@ -460,38 +486,7 @@ class _LogicAnalyzerScreenState extends State<LogicAnalyzerScreen> {
                           onPressed: _showRecordingDetails,
                         ),
                       ]
-                    : [
-                        IconButton(
-                          icon: Icon(Icons.save, color: Colors.white),
-                          tooltip: appLocalizations.saveData,
-                          onPressed: () async {
-                            if (!getIt.get<ScienceLab>().isConnected()) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      appLocalizations.notConnected,
-                                      style: TextStyle(
-                                          color: snackBarContentColor),
-                                    ),
-                                    backgroundColor: snackBarBackgroundColor,
-                                  ),
-                                );
-                              }
-                              return;
-                            }
-                            await _provider.logData();
-                            if (!context.mounted) return;
-                            final data = _provider.recordedData;
-                            await ExportHelper.handleSaveData(
-                              context: context,
-                              instrumentName:
-                                  appLocalizations.logicAnalyzer.toLowerCase(),
-                              data: data,
-                            );
-                          },
-                        ),
-                      ],
+                    : null,
               ),
               if (_showGuide)
                 InstrumentOverviewDrawer(

@@ -141,7 +141,7 @@ class _OledDisplayScreenState extends State<OledDisplayScreen> {
             title: appLocalizations.oledDisplayTitle,
             onOptionsPressed: _showOptionsMenu,
             onGuidePressed: () => setState(() => _showGuide = true),
-            onRecordPressed: _toggleRecording,
+            onSaveDataPressed: _toggleRecording,
             isRecording: _provider.isRecording,
             isPlayingBack: _provider.isPlayingBack,
             body: SafeArea(
