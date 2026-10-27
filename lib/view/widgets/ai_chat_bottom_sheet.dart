@@ -9,6 +9,7 @@ import '../../l10n/app_localizations.dart';
 import '../../providers/ai_assistant_provider.dart';
 import '../../services/ai_context_scooper.dart';
 import '../../theme/colors.dart';
+import '../../providers/locator.dart';
 
 class AiChatBottomSheet extends StatefulWidget {
   const AiChatBottomSheet({super.key});
@@ -53,7 +54,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
   }
 
   void _sendQuery(String text, AiAssistantProvider provider) {
-    if (text.trim().isEmpty) return;
+    if (text.trim().isEmpty || provider.isLoading) return;
     _inputController.clear();
     FocusScope.of(context).unfocus();
     provider.sendMessage(text);
@@ -62,7 +63,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = getIt.get<AppLocalizations>();
     final mediaQuery = MediaQuery.of(context);
     final bottomInset = mediaQuery.viewInsets.bottom;
     final screenHeight = mediaQuery.size.height;
@@ -107,7 +108,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
-                            l10n?.aiAssistantTitle ?? 'AI Assistant',
+                            l10n.aiAssistantTitle,
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -116,8 +117,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                           ),
                         ),
                         IconButton(
-                          tooltip: l10n?.aiClearChatHistoryTooltip ??
-                              'Clear Chat History',
+                          tooltip: l10n.aiClearChatHistoryTooltip,
                           icon: const Icon(Icons.delete_sweep_outlined,
                               color: Colors.white, size: 20),
                           onPressed: provider.messages.isEmpty
@@ -127,7 +127,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                                 },
                         ),
                         IconButton(
-                          tooltip: l10n?.close ?? 'Close',
+                          tooltip: l10n.close,
                           icon: const Icon(Icons.close,
                               color: Colors.white, size: 20),
                           onPressed: () => Navigator.pop(context),
@@ -180,9 +180,8 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                                           children: [
                                             Text(
                                               _showTelemetryDetails
-                                                  ? (l10n?.aiHide ?? 'Hide')
-                                                  : (l10n?.aiInspect ??
-                                                      'Inspect'),
+                                                  ? l10n.aiHide
+                                                  : l10n.aiInspect,
                                               style: TextStyle(
                                                 fontSize: 11,
                                                 fontWeight: FontWeight.bold,
@@ -239,7 +238,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                               decoration: BoxDecoration(
                                   color: oscilloscopeOptionTitleBoxColor),
                               child: Text(
-                                l10n?.aiContext ?? 'CONTEXT',
+                                l10n.aiContext,
                                 style: TextStyle(
                                   color: oscilloscopeOptionTitleColor,
                                   fontWeight: FontWeight.bold,
@@ -293,11 +292,9 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                                       provider.messages.last.role ==
                                           'assistant' &&
                                       provider.messages.last.content.isNotEmpty
-                                  ? (l10n?.aiStreamingResponse ??
-                                      'Streaming response...')
-                                  : (l10n?.aiConnectingToModel(
-                                          provider.selectedModel) ??
-                                      'Connecting to ${provider.selectedModel}...'),
+                                  ? l10n.aiStreamingResponse
+                                  : l10n.aiConnectingToModel(
+                                      provider.selectedModel),
                               style: TextStyle(
                                   fontSize: 11, color: Colors.grey.shade600),
                             ),
@@ -334,10 +331,8 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                             onSubmitted: (text) => _sendQuery(text, provider),
                             decoration: InputDecoration(
                               hintText: provider.isAuthenticated
-                                  ? (l10n?.aiAskInstrumentHint ??
-                                      'Ask about this instrument or experiment...')
-                                  : (l10n?.aiConnectKeyHint ??
-                                      'Connect OpenRouter key in Settings...'),
+                                  ? l10n.aiAskInstrumentHint
+                                  : l10n.aiConnectKeyHint,
                               hintStyle: TextStyle(
                                   fontSize: 13, color: Colors.grey.shade500),
                               isDense: true,
@@ -358,10 +353,17 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                         ),
                         const SizedBox(width: 6),
                         IconButton(
-                          icon: Icon(Icons.send_rounded,
-                              color: primaryRed, size: 22),
+                          tooltip: provider.isLoading
+                              ? l10n.stopGeneration
+                              : l10n.send,
+                          icon: Icon(
+                              provider.isLoading
+                                  ? Icons.stop_circle_outlined
+                                  : Icons.send_rounded,
+                              color: primaryRed,
+                              size: 22),
                           onPressed: provider.isLoading
-                              ? null
+                              ? provider.cancelMessage
                               : () =>
                                   _sendQuery(_inputController.text, provider),
                         ),
@@ -533,7 +535,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
   }
 
   Widget _buildMessageItem(ChatMessage message) {
-    final l10n = AppLocalizations.of(context);
+    final l10n = getIt.get<AppLocalizations>();
     final isUser = message.role == 'user';
     final isError = !isUser &&
         (message.content.startsWith('Error (') ||
@@ -579,7 +581,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      l10n?.aiYou ?? 'You',
+                      l10n.aiYou,
                       style: const TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -593,8 +595,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              l10n?.aiMessageCopied ??
-                                  'Message copied to clipboard.',
+                              l10n.aiMessageCopied,
                               style: const TextStyle(color: Colors.white),
                             ),
                             backgroundColor: Colors.black87,
@@ -630,8 +631,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                         color: Colors.white70, size: 12),
                     const SizedBox(width: 4),
                     Text(
-                      l10n?.aiTelemetrySnapshotIncluded ??
-                          'Telemetry Snapshot Included',
+                      l10n.aiTelemetrySnapshotIncluded,
                       style:
                           const TextStyle(color: Colors.white70, fontSize: 10),
                     ),
@@ -650,9 +650,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      isError
-                          ? (l10n?.aiErrorLabel ?? 'Error')
-                          : (l10n?.aiAssistantTitle ?? 'AI Assistant'),
+                      isError ? l10n.aiErrorLabel : l10n.aiAssistantTitle,
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -666,8 +664,7 @@ class _AiChatBottomSheetState extends State<AiChatBottomSheet> {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
                             content: Text(
-                              l10n?.aiResponseCopied ??
-                                  'Response copied to clipboard.',
+                              l10n.aiResponseCopied,
                               style: const TextStyle(color: Colors.white),
                             ),
                             backgroundColor: Colors.black87,

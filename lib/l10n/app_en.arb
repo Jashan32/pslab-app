@@ -1019,6 +1019,7 @@
     "labradorPowerSourceBulletPoint2": "Hardware Jumper: Ensure the 3-pin jumper on the Labrador board has pins 1 and 2 bridged (towards the board edge) for PSU boost operation.",
     "labradorPowerSourceBulletPoint3": "Note: EspoTek Labrador does not have an onboard constant current source (PCS); current is determined by your load resistance (I = V / R, up to 0.75 W max).",
     "aiAssistantTitle": "AI Assistant",
+    "stopGeneration": "Stop generating",
     "aiAuthStatusTitle": "AUTHENTICATION STATUS",
     "aiConnectedOpenRouter": "Connected to OpenRouter",
     "aiNotConnected": "Not Connected",

@@ -42,6 +42,11 @@ class AiAssistantProvider extends ChangeNotifier {
   String _selectedModel = defaultModel;
   bool _isLoading = false;
   String? _statusMessage;
+  http.Client? _activeClient;
+  StreamIterator<String>? _activeStreamIterator;
+  ChatMessage? _activeAssistantMessage;
+  int _requestGeneration = 0;
+  bool _cancelRequested = false;
 
   final List<ChatMessage> _messages = [];
   final List<String> _diagnosticLogs = [];
@@ -301,6 +306,29 @@ class AiAssistantProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  void cancelMessage() {
+    if (!_isLoading) return;
+    _cancelRequested = true;
+    _requestGeneration++;
+    final iterator = _activeStreamIterator;
+    _activeStreamIterator = null;
+    unawaited(iterator?.cancel());
+    _activeClient?.close();
+    _activeClient = null;
+    final assistantMessage = _activeAssistantMessage;
+    if (assistantMessage != null) {
+      _messages.remove(assistantMessage);
+      _activeAssistantMessage = null;
+    }
+    _isLoading = false;
+    addLog('Response generation canceled by user.');
+    notifyListeners();
+  }
+
+  bool _isActiveRequest(int generation) {
+    return _isLoading && !_cancelRequested && generation == _requestGeneration;
+  }
+
   Future<void> sendMessage(String text) async {
     final cleanText = text.trim();
     if (cleanText.isEmpty) {
@@ -311,6 +339,7 @@ class AiAssistantProvider extends ChangeNotifier {
       addLog('sendMessage: Ignored because another request is in progress.');
       return;
     }
+    _isLoading = true;
 
     addLog('sendMessage: "$cleanText"');
     final apiKey = await _authService.getApiKey();
@@ -321,6 +350,7 @@ class AiAssistantProvider extends ChangeNotifier {
         content:
             'Please connect your OpenRouter account or enter an API key in Assistant Settings first.',
       ));
+      _isLoading = false;
       notifyListeners();
       return;
     }
@@ -341,6 +371,10 @@ class AiAssistantProvider extends ChangeNotifier {
     ));
 
     _isLoading = true;
+    _cancelRequested = false;
+    final requestGeneration = ++_requestGeneration;
+    final client = http.Client();
+    _activeClient = client;
     notifyListeners();
 
     try {
@@ -411,7 +445,7 @@ class AiAssistantProvider extends ChangeNotifier {
             'include_reasoning': false,
             'temperature': 0.6,
           });
-        return request.send().timeout(Duration(seconds: timeoutSec));
+        return client.send(request).timeout(Duration(seconds: timeoutSec));
       }
 
       addLog(
@@ -441,6 +475,7 @@ class AiAssistantProvider extends ChangeNotifier {
             addLog(
                 'Fallback connected: HTTP ${res.statusCode} in ${fallbackStopwatch.elapsedMilliseconds}ms');
           } on TimeoutException {
+            if (!_isActiveRequest(requestGeneration)) return;
             addLog('Fallback model ($defaultModel) also timed out.');
             _messages.add(ChatMessage(
               role: 'assistant',
@@ -459,7 +494,9 @@ class AiAssistantProvider extends ChangeNotifier {
         }
       }
       if (res.statusCode < 200 || res.statusCode >= 300) {
+        if (!_isActiveRequest(requestGeneration)) return;
         final errBytes = await res.stream.toBytes();
+        if (!_isActiveRequest(requestGeneration)) return;
         final errBody = utf8.decode(errBytes);
         final code = res.statusCode;
         final bodyLower = errBody.toLowerCase();
@@ -487,6 +524,7 @@ class AiAssistantProvider extends ChangeNotifier {
             addLog(
                 'Fallback stream connected: HTTP ${res.statusCode} in ${fallbackStopwatch.elapsedMilliseconds}ms');
           } catch (e) {
+            if (!_isActiveRequest(requestGeneration)) return;
             addLog('Fallback request failed: $e');
             _messages.add(ChatMessage(
               role: 'assistant',
@@ -509,10 +547,12 @@ class AiAssistantProvider extends ChangeNotifier {
       }
       final contentType = res.headers['content-type'] ?? '';
       if (contentType.contains('text/event-stream')) {
+        if (!_isActiveRequest(requestGeneration)) return;
         final assistantMessage = ChatMessage(
           role: 'assistant',
           content: '',
         );
+        _activeAssistantMessage = assistantMessage;
         _messages.add(assistantMessage);
         notifyListeners();
 
@@ -521,9 +561,12 @@ class AiAssistantProvider extends ChangeNotifier {
         String? streamErrorMessage;
         String reasoningAccumulator = '';
 
-        await for (final line in res.stream
-            .transform(utf8.decoder)
-            .transform(const LineSplitter())) {
+        final streamIterator = StreamIterator<String>(
+            res.stream.transform(utf8.decoder).transform(const LineSplitter()));
+        _activeStreamIterator = streamIterator;
+        while (await streamIterator.moveNext()) {
+          if (!_isActiveRequest(requestGeneration)) return;
+          final line = streamIterator.current;
           final trimmed = line.trim();
           if (trimmed.isEmpty) continue;
           if (trimmed.startsWith('data: ')) {
@@ -566,6 +609,8 @@ class AiAssistantProvider extends ChangeNotifier {
             } catch (_) {}
           }
         }
+        _activeStreamIterator = null;
+        if (!_isActiveRequest(requestGeneration)) return;
         streamStopwatch.stop();
         addLog(
             'Stream finished: ${assistantMessage.content.length} chars (reasoning: ${reasoningAccumulator.length}) in ${streamStopwatch.elapsedMilliseconds}ms.');
@@ -576,10 +621,11 @@ class AiAssistantProvider extends ChangeNotifier {
           assistantMessage.content = reasoningAccumulator.trim();
         }
         if (assistantMessage.content.trim().isEmpty) {
+          if (!_isActiveRequest(requestGeneration)) return;
           addLog(
               'Stream yielded 0 content. Triggering robust non-streaming completion fallback...');
           try {
-            final fbRes = await http
+            final fbRes = await client
                 .post(
                   Uri.parse('https://openrouter.ai/api/v1/chat/completions'),
                   headers: {
@@ -598,6 +644,7 @@ class AiAssistantProvider extends ChangeNotifier {
                 )
                 .timeout(const Duration(seconds: 30));
 
+            if (!_isActiveRequest(requestGeneration)) return;
             if (fbRes.statusCode >= 200 && fbRes.statusCode < 300) {
               final fbBody = jsonDecode(utf8.decode(fbRes.bodyBytes));
               final choices = fbBody['choices'] as List<dynamic>?;
@@ -619,6 +666,7 @@ class AiAssistantProvider extends ChangeNotifier {
         assistantMessage.content =
             sanitizeAssistantResponse(assistantMessage.content);
 
+        if (!_isActiveRequest(requestGeneration)) return;
         if (assistantMessage.content.trim().isEmpty) {
           assistantMessage.content = streamErrorMessage != null
               ? 'OpenRouter error: $streamErrorMessage'
@@ -626,7 +674,9 @@ class AiAssistantProvider extends ChangeNotifier {
         }
         notifyListeners();
       } else {
+        if (!_isActiveRequest(requestGeneration)) return;
         final rawBody = await res.stream.bytesToString();
+        if (!_isActiveRequest(requestGeneration)) return;
         try {
           final body = jsonDecode(rawBody);
           final choices = body['choices'] as List<dynamic>?;
@@ -654,6 +704,7 @@ class AiAssistantProvider extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e, stack) {
+      if (!_isActiveRequest(requestGeneration)) return;
       addLog('Network/Request Exception: $e');
       debugPrint('[AiAssistantProvider] Exception: $e\n$stack');
       _messages.add(ChatMessage(
@@ -661,8 +712,15 @@ class AiAssistantProvider extends ChangeNotifier {
         content: 'Failed to communicate with OpenRouter: $e',
       ));
     } finally {
-      _isLoading = false;
-      notifyListeners();
+      client.close();
+      if (requestGeneration == _requestGeneration) {
+        _activeStreamIterator = null;
+        _activeClient = null;
+        _activeAssistantMessage = null;
+        _isLoading = false;
+        _cancelRequested = false;
+        notifyListeners();
+      }
     }
   }
 
